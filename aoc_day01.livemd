@@ -2,7 +2,8 @@
 
 ```elixir
 Mix.install([
-  {:kino_aoc, "~> 0.1"}
+  {:kino_aoc, "~> 0.1"},
+  {:benchee, "~> 1.0"}
 ])
 ```
 
@@ -128,7 +129,7 @@ ExUnit.run()
 ### Solution
 
 ```elixir
-PartOne.solve(puzzle_input)
+Benchee.run(%{part_one: fn -> PartOne.solve(puzzle_input) end})
 ```
 
 <!-- livebook:{"branch_parent_index":0} -->
@@ -229,7 +230,7 @@ ExUnit.run()
 ### Solution
 
 ```elixir
-PartTwo.solve(puzzle_input)
+Benchee.run(%{part_two: fn -> PartTwo.solve(puzzle_input) end})
 ```
 
-<!-- livebook:{"offset":5458,"stamp":{"token":"XCP._j9Xv2UonpyezoA_MxZFYaK0QrXZIgQRMebzQAGLB_gensuWKOzkQ6XOt9-FM_20biQbIOGRszYLw60T6QlIFGtH93v2cmqcroGiSncCp23LVd6aZ2c","version":2}} -->
+<!-- livebook:{"offset":5554,"stamp":{"token":"XCP.1nVms52hQ1zd7CXYoTjqeV6bjnOr5rk-3AMdwG3jnPnEfaCOOF_tFpWuAAA4mfEyApLibez2wjBUfVR-reO9XxA7MRmIzxVVvoGf8oixFBE96yu11Kw","version":2}} -->
