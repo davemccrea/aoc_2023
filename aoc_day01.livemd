@@ -168,6 +168,21 @@ defmodule PartTwo do
   end
 
   def run(input) do
+    lines = String.split(input)
+
+    pattern_start = ~r/one|two|three|four|five|six|seven|eight|nine|[0-9]/
+    pattern_end = ~r/one|two|three|four|five|six|seven|eight|nine|[0-9]/, right: true
+
+    Enum.reduce(lines, 0, fn str, acc ->
+      first = Regex.run(pattern_start, str)
+      last = Regex.run(pattern_end, str)
+
+      IO.inspect(first, last)
+
+    end)
+  end
+
+  def _run(input) do
     input
     |> String.split()
     |> Enum.reduce(0, fn str, acc ->
@@ -233,4 +248,4 @@ ExUnit.run()
 Benchee.run(%{part_two: fn -> PartTwo.solve(puzzle_input) end})
 ```
 
-<!-- livebook:{"offset":5554,"stamp":{"token":"XCP.1nVms52hQ1zd7CXYoTjqeV6bjnOr5rk-3AMdwG3jnPnEfaCOOF_tFpWuAAA4mfEyApLibez2wjBUfVR-reO9XxA7MRmIzxVVvoGf8oixFBE96yu11Kw","version":2}} -->
+<!-- livebook:{"offset":5944,"stamp":{"token":"XCP.HSNi18nQiI8oX4dA5Oz0M7GKI3RxCXQP7n8wxHvpr_sb95KFWe45S3d9H-qyOaswUOyK0lVnYGAx1SWIZRN-nhwuCQ33JqUvAbJk7se8A_heieTrdI0","version":2}} -->
