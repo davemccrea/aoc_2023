@@ -86,7 +86,7 @@ defmodule PartOne do
     IO.puts("Result: #{run(input)}")
   end
 
-  def tidy(input) do
+  def parse(input) do
     input
     |> String.split("\n", trim: true)
     |> Enum.map(fn str ->
@@ -117,20 +117,19 @@ defmodule PartOne do
 
   def run(input) do
     input
-    |> tidy()
-    |> Enum.reduce([], fn {game_num, draws}, acc ->
-      if draw_gt?(draws, :red, 12) or draw_gt?(draws, :green, 13) or draw_gt?(draws, :blue, 14) do
+    |> parse()
+    |> Enum.reduce([], fn {game_num, game}, acc ->
+      if color_gt?(game, :red, 12) or color_gt?(game, :green, 13) or color_gt?(game, :blue, 14) do
         acc
       else
         [game_num | acc]
       end
     end)
     |> Enum.sum()
-    |> dbg()
   end
 
-  def draw_gt?(draws, color, value) do
-    draws
+  def color_gt?(game, color, value) do
+    game
     |> Keyword.get_values(color)
     |> Enum.any?(&(&1 > value))
   end
@@ -214,7 +213,7 @@ defmodule PartTwo do
     IO.puts("Result: #{run(input)}")
   end
 
-  def tidy(input) do
+  def parse(input) do
     input
     |> String.split("\n", trim: true)
     |> Enum.map(fn str ->
@@ -245,14 +244,15 @@ defmodule PartTwo do
 
   def run(input) do
     input
-    |> tidy()
+    |> parse()
     |> Enum.map(fn {_, game} ->
-      fewest(game, :red) * fewest(game, :green) * fewest(game, :blue)
+      min_set(game, :red) * min_set(game, :green) * min_set(game, :blue)
     end)
     |> Enum.sum()
   end
 
-  def fewest(game, color) do
+  # The minimum set for a color is the highest value drawn
+  def min_set(game, color) do
     game
     |> Keyword.get_values(color)
     |> Enum.max()
@@ -297,4 +297,4 @@ ExUnit.run()
 PartTwo.solve(puzzle_input)
 ```
 
-<!-- livebook:{"offset":9103,"stamp":{"token":"XCP.zDKAxxf6kwnlphxm_3finIydRZK2jQZsa3hWD8tiqx0YQfvBmaesrkS3oijHjiw-drmB__iSR9SJhivcTiNirrQ1O1XSY1bkgzUzwyI9mz7sUnQsYCE","version":2}} -->
+<!-- livebook:{"offset":9155,"stamp":{"token":"XCP.fIEdYZbUdhVA3ZGwJ25iBtvtk0IV44_EmnhldsIQHOUrz6n857mqMYqoNWyHwXMdijsYXoGllX1VdW5qewS4a8gbARB7qrMILavOeZ642p0vO_ncENQ","version":2}} -->
