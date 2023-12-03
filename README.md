@@ -23,7 +23,7 @@ I felt the hardest part of this puzzle was parsing the each line of text into a 
 I knew I wanted to use a Keyword list and ended up calling `String.split` more than I would have liked:
 
 ```elixir
-def tidy(input) do
+def parse(input) do
   input
   |> String.split("\n", trim: true)
   |> Enum.map(fn str ->
