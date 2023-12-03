@@ -16,3 +16,39 @@ My tests passed but the answer I gave to AoC was not accepted. Turns out the Reg
 ~r/(?=(one|two|three|four|five|six|seven|eight|nine|[0-9]))/
 ```
 
+### Day 2
+
+I felt the hardest part of this puzzle was parsing the each line of text into a data structure I could work with.
+
+I knew I wanted to use a Keyword list and ended up calling `String.split` more than I would have liked:
+
+```elixir
+def tidy(input) do
+  input
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn str ->
+    [k, v] = String.split(str, ":", trim: true)
+
+    key =
+      k
+      |> String.split(" ", trim: true)
+      |> (fn [_, n] -> n end).()
+      |> String.to_integer()
+
+    value =
+      v
+      |> String.split(";", trim: true)
+      |> Enum.map(&String.split(&1, ",", trim: true))
+      |> List.flatten()
+      |> Enum.map(fn x ->
+        x
+        |> String.trim()
+        |> String.split(" ")
+        |> (fn [n, color] -> {String.to_atom(color), String.to_integer(n)} end).()
+      end)
+      |> List.flatten()
+
+    {key, value}
+  end)
+end
+```

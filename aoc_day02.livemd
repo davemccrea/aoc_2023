@@ -297,4 +297,4 @@ ExUnit.run()
 PartTwo.solve(puzzle_input)
 ```
 
-<!-- livebook:{"offset":9103,"stamp":{"token":"XCP.yS15E3pwci8adyjHVjZNLns_-Odj2GrH_gzrF2Zy-gntO9gPGNqCvbsiBAn5k1PEwSdENfzP8Bx57Uaob2l-p55E4JiPbEM4VUayc7iT2NmdXe3uHmA","version":2}} -->
+<!-- livebook:{"offset":9103,"stamp":{"token":"XCP.zDKAxxf6kwnlphxm_3finIydRZK2jQZsa3hWD8tiqx0YQfvBmaesrkS3oijHjiw-drmB__iSR9SJhivcTiNirrQ1O1XSY1bkgzUzwyI9mz7sUnQsYCE","version":2}} -->
