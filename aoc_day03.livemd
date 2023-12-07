@@ -122,7 +122,7 @@ defmodule PartOne do
     |> Enum.reduce([], fn {_key, list} = number, acc ->
       keys = get_neighbour_keys(number)
 
-      if is_part_number(keys, symbols) do
+      if is_part_number?(keys, symbols) do
         list =
           list
           |> Enum.reverse()
@@ -137,7 +137,7 @@ defmodule PartOne do
     |> Enum.sum()
   end
 
-  def is_part_number(keys, symbols) do
+  def is_part_number?(keys, symbols) do
     keys
     |> Enum.filter(&Map.has_key?(symbols, &1))
     |> Enum.any?()
@@ -149,18 +149,35 @@ defmodule PartOne do
     number_list
     |> Enum.with_index()
     |> Enum.reduce([], fn {_, i}, acc ->
-      case i do
+      cond do
+        # Lone number
+        count == 0 ->
+          # working clockwise from top left
+          [
+            [
+              {r - 1, c - 1},
+              {r - 1, c},
+              {r - 1, c + 1},
+              {r, c + 1},
+              {r + 1, c + 1},
+              {r + 1, c},
+              {r + 1, c - 1},
+              {r, c - 1}
+            ]
+            | acc
+          ]
+
         # Left most number
-        0 ->
+        i == 0 ->
           [[{r - 1, c - 1}, {r - 1, c}, {r + 1, c}, {r, c - 1}, {r + 1, c - 1} | acc]]
 
         # Right most number
-        ^count ->
+        i == count ->
           c = c + count
           [[{r - 1, c + 1}, {r - 1, c}, {r + 1, c}, {r, c + 1}, {r + 1, c + 1}] | acc]
 
         # Middle numbers
-        _ ->
+        true ->
           c = c + i
           [[{r - 1, c}, {r + 1, c}] | acc]
       end
@@ -217,24 +234,42 @@ ExUnit.start(autorun: false)
 defmodule PartOneTest do
   use ExUnit.Case, async: true
 
-  @input """
-  467..114..
-  ...*......
-  ..35..633.
-  ......#...
-  617*......
-  .....+.58.
-  ..592.....
-  ......755.
-  ...$.*....
-  .664.598..
-  """
+  test "AoC example" do
+    input = """
+    467..114..
+    ...*......
+    ..35..633.
+    ......#...
+    617*......
+    .....+.58.
+    ..592.....
+    ......755.
+    ...$.*....
+    .664.598..
+    """
 
-  @expected 4361
+    actual = PartOne.run(input)
+    assert actual == 4361
+  end
 
-  test "part two" do
-    actual = PartOne.run(@input)
-    assert actual == @expected
+  test "reddit sample" do
+    input = """
+    12.......*..
+    +.........34
+    .......-12..
+    ..78........
+    ..*....60...
+    78.........9
+    .5.....23..$
+    8...90*12...
+    ............
+    2.2......12.
+    .*.........*
+    1.1..503+.56
+    """
+
+    actual = PartOne.run(input)
+    assert actual == 925
   end
 end
 
@@ -299,4 +334,4 @@ ExUnit.run()
 PartTwo.solve(puzzle_input)
 ```
 
-<!-- livebook:{"offset":6761,"stamp":{"token":"XCP.GMIFSBtql8Q5xlY556o687idn6Ojm5vtY9peMq2Iy3G00BwxB9VKMhlepoTeVkq0PXh46DSs1TjIUtEFBF6LHsKrp5cUpwYBYi1_-PEbfJ6SBtiWXYM","version":2}} -->
+<!-- livebook:{"offset":7478,"stamp":{"token":"XCP.1doaqi3IR5Djg3va7oXEo_MsjQHCP-YWRap7PZyuXmCc9Tk-qTpDG6Gg8tdUIQWyGEF-ug5nxlcUnu5uEagZq2mhEJLrQ0Z470vmVw0OWtbmMIS70vI","version":2}} -->
