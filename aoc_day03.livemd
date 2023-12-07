@@ -1,0 +1,302 @@
+# Advent of Code - Day 03
+
+```elixir
+Mix.install([
+  {:kino_aoc, "~> 0.1"}
+])
+```
+
+## Setup
+
+<!-- livebook:{"attrs":{"assign_to":"puzzle_input","day":"3","session_secret":"AOC_SESSION","year":"2023"},"chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+
+```elixir
+{:ok, puzzle_input} =
+  KinoAOC.download_puzzle("2023", "3", System.fetch_env!("LB_AOC_SESSION"))
+```
+
+```elixir
+defmodule Parser do
+  def parse(input) do
+  end
+end
+```
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule ParserTest do
+  use ExUnit.Case, async: true
+  import Parser
+
+  @input ""
+  @expected nil
+
+  test "parse test" do
+    actual = parse(@input)
+    assert actual == @expected
+  end
+end
+
+ExUnit.run()
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part One
+
+### Description
+
+You and the Elf eventually reach a gondola lift station; he says the gondola lift will take you up to the water source, but this is as far as he can bring you. You go inside.
+
+It doesn't take long to find the gondolas, but there seems to be a problem: they're not moving.
+
+"Aaah!"
+
+You turn around to see a slightly-greasy Elf with a wrench and a look of surprise. "Sorry, I wasn't expecting anyone! The gondola lift isn't working right now; it'll still be a while before I can fix it." You offer to help.
+
+The engineer explains that an engine part seems to be missing from the engine, but nobody can figure out which one. If you can add up all the part numbers in the engine schematic, it should be easy to work out which part is missing.
+
+The engine schematic (your puzzle input) consists of a visual representation of the engine. There are lots of numbers and symbols you don't really understand, but apparently any number adjacent to a symbol, even diagonally, is a "part number" and should be included in your sum. (Periods (.) do not count as a symbol.)
+
+Here is an example engine schematic:
+
+```
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+```
+
+In this schematic, two numbers are not part numbers because they are not adjacent to a symbol: 114 (top right) and 58 (middle right). Every other number is adjacent to a symbol and so is a part number; their sum is 4361.
+
+Of course, the actual engine schematic is much larger. What is the sum of all of the part numbers in the engine schematic?
+
+<!-- livebook:{"break_markdown":true} -->
+
+### Code
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defmodule PartOne do
+  def solve(input) do
+    IO.puts("--- Part One ---")
+    IO.puts("Result: #{run(input)}")
+  end
+
+  def prepare_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn row -> String.split(row, "", trim: true) end)
+  end
+
+  def run(input) do
+    input = prepare_input(input)
+
+    {symbols, numbers} =
+      input
+      |> Enum.with_index()
+      |> Enum.reduce({%{}, %{}}, fn {row, row_index}, {symbols, numbers} ->
+        {_, row_symbols, row_numbers, _} =
+          row
+          |> Enum.with_index()
+          |> Enum.reduce({[], %{}, %{}, nil}, fn {value, col_index},
+                                                 {acc, symbols, numbers, key} ->
+            value = add_label(value)
+            symbols = collect_symbols(symbols, value, {row_index, col_index})
+            {key, numbers} = collect_numbers(numbers, key || {row_index, col_index}, value, acc)
+            {[value | acc], symbols, numbers, key}
+          end)
+
+        {Map.merge(symbols, row_symbols), Map.merge(numbers, row_numbers)}
+      end)
+
+    numbers
+    |> Enum.reduce([], fn {_key, list} = number, acc ->
+      keys = get_neighbour_keys(number)
+
+      if is_part_number(keys, symbols) do
+        list =
+          list
+          |> Enum.reverse()
+          |> Enum.join("")
+          |> String.to_integer()
+
+        [list | acc]
+      else
+        acc
+      end
+    end)
+    |> Enum.sum()
+  end
+
+  def is_part_number(keys, symbols) do
+    keys
+    |> Enum.filter(&Map.has_key?(symbols, &1))
+    |> Enum.any?()
+  end
+
+  def get_neighbour_keys({{r, c}, number_list}) do
+    count = Enum.count(number_list) - 1
+
+    number_list
+    |> Enum.with_index()
+    |> Enum.reduce([], fn {_, i}, acc ->
+      case i do
+        # Left most number
+        0 ->
+          [[{r - 1, c - 1}, {r - 1, c}, {r + 1, c}, {r, c - 1}, {r + 1, c - 1} | acc]]
+
+        # Right most number
+        ^count ->
+          c = c + count
+          [[{r - 1, c + 1}, {r - 1, c}, {r + 1, c}, {r, c + 1}, {r + 1, c + 1}] | acc]
+
+        # Middle numbers
+        _ ->
+          c = c + i
+          [[{r - 1, c}, {r + 1, c}] | acc]
+      end
+    end)
+    |> List.flatten()
+  end
+
+  def collect_numbers(numbers, key, {:number, n}, [{:number, _} | _tail]) do
+    {key, Map.update!(numbers, key, fn list -> [n | list] end)}
+  end
+
+  def collect_numbers(numbers, key, {:number, n}, _) do
+    {key, Map.put(numbers, key, [n])}
+  end
+
+  def collect_numbers(numbers, _, _, _) do
+    {nil, numbers}
+  end
+
+  def collect_symbols(symbols, {:symbol, symbol}, {_row_index, _col_index} = key) do
+    Map.put(symbols, key, symbol)
+  end
+
+  def collect_symbols(symbols, _, _), do: symbols
+
+  def add_label(value) do
+    case value do
+      "0" -> {:number, 0}
+      "1" -> {:number, 1}
+      "2" -> {:number, 2}
+      "3" -> {:number, 3}
+      "4" -> {:number, 4}
+      "5" -> {:number, 5}
+      "6" -> {:number, 6}
+      "7" -> {:number, 7}
+      "8" -> {:number, 8}
+      "9" -> {:number, 9}
+      "." -> {:space, "."}
+      _ -> {:symbol, value}
+    end
+  end
+end
+
+PartOne.run(puzzle_input)
+```
+
+### Tests
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule PartOneTest do
+  use ExUnit.Case, async: true
+
+  @input """
+  467..114..
+  ...*......
+  ..35..633.
+  ......#...
+  617*......
+  .....+.58.
+  ..592.....
+  ......755.
+  ...$.*....
+  .664.598..
+  """
+
+  @expected 4361
+
+  test "part two" do
+    actual = PartOne.run(@input)
+    assert actual == @expected
+  end
+end
+
+ExUnit.run()
+```
+
+### Solution
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+PartOne.solve(puzzle_input)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part Two
+
+### Code
+
+```elixir
+defmodule PartTwo do
+  def solve(input) do
+    IO.puts("--- Part Two ---")
+    IO.puts("Result: #{run(input)}")
+  end
+
+  def run(input) do
+  end
+end
+```
+
+### Tests
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule PartTwoTest do
+  use ExUnit.Case, async: true
+  import PartTwo
+
+  @input """
+  """
+  @expected nil
+
+  test "part two" do
+    actual = run(@input)
+    assert actual == @expected
+  end
+end
+
+ExUnit.run()
+```
+
+### Solution
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+PartTwo.solve(puzzle_input)
+```
+
+<!-- livebook:{"offset":6761,"stamp":{"token":"XCP.GMIFSBtql8Q5xlY556o687idn6Ojm5vtY9peMq2Iy3G00BwxB9VKMhlepoTeVkq0PXh46DSs1TjIUtEFBF6LHsKrp5cUpwYBYi1_-PEbfJ6SBtiWXYM","version":2}} -->
