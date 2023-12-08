@@ -316,14 +316,10 @@ defmodule PartTwo do
       |> prepare_input()
       |> find_symbols_and_numbers()
 
-    # [{{row_index, col_index}, "*"}]
     grid_gear_keys =
       symbols
       |> Enum.filter(fn {{_, _}, symbol} -> symbol == "*" end)
       |> Enum.map(fn {key, _} -> key end)
-
-    # Locate every gear
-    # Check if a number has a gear adjacent
 
     Enum.reduce(numbers, [], fn {_key, number_list} = number, acc ->
       number_gear_keys =
@@ -331,19 +327,11 @@ defmodule PartTwo do
         |> get_neighbour_keys()
         |> Enum.filter(&(&1 in grid_gear_keys))
 
-      case number_gear_keys do
-        [] ->
-          acc
-
-        _ ->
-          number = number_list_to_integer(number_list)
-          [Enum.reduce(number_gear_keys, [], fn key, acc -> [{key, number} | acc] end) | acc]
-      end
+      number = number_list_to_integer(number_list)
+      [Enum.reduce(number_gear_keys, [], fn key, acc -> [{key, number} | acc] end) | acc]
     end)
     |> List.flatten()
-    |> Enum.reduce(%{}, fn {k, v}, acc ->
-      Map.update(acc, k, [v], &[v | &1])
-    end)
+    |> Enum.reduce(%{}, fn {k, v}, acc -> Map.update(acc, k, [v], &[v | &1]) end)
     |> Map.reject(fn {_k, v} -> Enum.count(v) == 1 end)
     |> Enum.map(fn {_k, v} -> Enum.reduce(v, 1, fn n, acc -> n * acc end) end)
     |> Enum.sum()
@@ -353,8 +341,6 @@ defmodule PartTwo do
     Enum.filter(keys, &Map.has_key?(gears, &1))
   end
 end
-
-PartTwo.run_parttwo(puzzle_input)
 ```
 
 ### Tests
@@ -382,8 +368,8 @@ defmodule PartTwoTest do
   """
   @expected 467_835
 
-  test "part two" do
-    actual = run_parttwo(@input) |> IO.inspect()
+  test "part two sample" do
+    actual = run_parttwo(@input)
     assert actual == @expected
   end
 end
@@ -399,4 +385,4 @@ ExUnit.run()
 PartTwo.solve(puzzle_input)
 ```
 
-<!-- livebook:{"offset":9936,"stamp":{"token":"XCP.XHJH0lkkA0rIapmNM7aVJSJocbS6cPaGK6q8iSNLUMXEeJKm8n_b9g-jJsiEus7PQBifx33d-qaul37X2FN9KWDdR9AceBF6wZ7Twoam4qzodzzvXj4","version":2}} -->
+<!-- livebook:{"offset":9684,"stamp":{"token":"XCP.38iCBszBIezmr1cIzolfbby5-nif4WD01_1Yf4aPWjRr57Y62YBFVf0Q9AIFgjJ2IB5PJL0KT2L5mGHUYyfyWGvuTYVcIKuu-An3jfnccuriYSntAeM","version":2}} -->
