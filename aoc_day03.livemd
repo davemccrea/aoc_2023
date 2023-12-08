@@ -88,7 +88,7 @@ Of course, the actual engine schematic is much larger. What is the sum of all of
 defmodule PartOne do
   def solve(input) do
     IO.puts("--- Part One ---")
-    IO.puts("Result: #{run(input)}")
+    IO.puts("Result: #{run_partone(input)}")
   end
 
   def prepare_input(input) do
@@ -97,44 +97,43 @@ defmodule PartOne do
     |> Enum.map(fn row -> String.split(row, "", trim: true) end)
   end
 
-  def run(input) do
-    input = prepare_input(input)
+  def find_symbols_and_numbers(grid) do
+    grid
+    |> Enum.with_index()
+    |> Enum.reduce({%{}, %{}}, fn {row, row_index}, {symbols, numbers} ->
+      {_, row_symbols, row_numbers, _} =
+        row
+        |> Enum.with_index()
+        |> Enum.reduce({[], %{}, %{}, nil}, fn {value, col_index}, {acc, symbols, numbers, key} ->
+          value = add_label(value)
+          symbols = collect_symbols(symbols, value, {row_index, col_index})
+          {key, numbers} = collect_numbers(numbers, key || {row_index, col_index}, value, acc)
+          {[value | acc], symbols, numbers, key}
+        end)
 
+      {Map.merge(symbols, row_symbols), Map.merge(numbers, row_numbers)}
+    end)
+  end
+
+  def run_partone(input) do
     {symbols, numbers} =
       input
-      |> Enum.with_index()
-      |> Enum.reduce({%{}, %{}}, fn {row, row_index}, {symbols, numbers} ->
-        {_, row_symbols, row_numbers, _} =
-          row
-          |> Enum.with_index()
-          |> Enum.reduce({[], %{}, %{}, nil}, fn {value, col_index},
-                                                 {acc, symbols, numbers, key} ->
-            value = add_label(value)
-            symbols = collect_symbols(symbols, value, {row_index, col_index})
-            {key, numbers} = collect_numbers(numbers, key || {row_index, col_index}, value, acc)
-            {[value | acc], symbols, numbers, key}
-          end)
-
-        {Map.merge(symbols, row_symbols), Map.merge(numbers, row_numbers)}
-      end)
+      |> prepare_input()
+      |> find_symbols_and_numbers()
 
     numbers
     |> Enum.reduce([], fn {_key, list} = number, acc ->
       keys = get_neighbour_keys(number)
-
-      if is_part_number?(keys, symbols) do
-        list =
-          list
-          |> Enum.reverse()
-          |> Enum.join("")
-          |> String.to_integer()
-
-        [list | acc]
-      else
-        acc
-      end
+      if is_part_number?(keys, symbols), do: [number_list_to_integer(list) | acc], else: acc
     end)
     |> Enum.sum()
+  end
+
+  def number_list_to_integer(list) do
+    list
+    |> Enum.reverse()
+    |> Enum.join("")
+    |> String.to_integer()
   end
 
   def is_part_number?(keys, symbols) do
@@ -144,45 +143,26 @@ defmodule PartOne do
   end
 
   def get_neighbour_keys({{r, c}, number_list}) do
-    count = Enum.count(number_list) - 1
-
     number_list
     |> Enum.with_index()
     |> Enum.reduce([], fn {_, i}, acc ->
-      cond do
-        # Lone number
-        count == 0 ->
-          # working clockwise from top left
-          [
-            [
-              {r - 1, c - 1},
-              {r - 1, c},
-              {r - 1, c + 1},
-              {r, c + 1},
-              {r + 1, c + 1},
-              {r + 1, c},
-              {r + 1, c - 1},
-              {r, c - 1}
-            ]
-            | acc
-          ]
-
-        # Left most number
-        i == 0 ->
-          [[{r - 1, c - 1}, {r - 1, c}, {r + 1, c}, {r, c - 1}, {r + 1, c - 1} | acc]]
-
-        # Right most number
-        i == count ->
-          c = c + count
-          [[{r - 1, c + 1}, {r - 1, c}, {r + 1, c}, {r, c + 1}, {r + 1, c + 1}] | acc]
-
-        # Middle numbers
-        true ->
-          c = c + i
-          [[{r - 1, c}, {r + 1, c}] | acc]
-      end
+      # working clockwise from top left
+      [
+        [
+          {r - 1, c - 1 + i},
+          {r - 1, c + i},
+          {r - 1, c + 1 + i},
+          {r, c + 1 + i},
+          {r + 1, c + 1 + i},
+          {r + 1, c + i},
+          {r + 1, c - 1 + i},
+          {r, c - 1 + i}
+        ]
+        | acc
+      ]
     end)
     |> List.flatten()
+    |> Enum.uniq()
   end
 
   def collect_numbers(numbers, key, {:number, n}, [{:number, _} | _tail]) do
@@ -220,8 +200,6 @@ defmodule PartOne do
     end
   end
 end
-
-PartOne.run(puzzle_input)
 ```
 
 ### Tests
@@ -248,7 +226,7 @@ defmodule PartOneTest do
     .664.598..
     """
 
-    actual = PartOne.run(input)
+    actual = PartOne.run_partone(input)
     assert actual == 4361
   end
 
@@ -268,7 +246,7 @@ defmodule PartOneTest do
     1.1..503+.56
     """
 
-    actual = PartOne.run(input)
+    actual = PartOne.run_partone(input)
     assert actual == 925
   end
 end
@@ -288,18 +266,95 @@ PartOne.solve(puzzle_input)
 
 ## Part Two
 
+### Description
+
+The engineer finds the missing part and installs it in the engine! As the engine springs to life, you jump in the closest gondola, finally ready to ascend to the water source.
+
+You don't seem to be going very fast, though. Maybe something is still wrong? Fortunately, the gondola has a phone labeled "help", so you pick it up and the engineer answers.
+
+Before you can explain the situation, she suggests that you look out the window. There stands the engineer, holding a phone in one hand and waving with the other. You're going so slowly that you haven't even left the station. You exit the gondola.
+
+The missing part wasn't the only issue - one of the gears in the engine is wrong. A gear is any * symbol that is adjacent to exactly two part numbers. Its gear ratio is the result of multiplying those two numbers together.
+
+This time, you need to find the gear ratio of every gear and add them all up so that the engineer can figure out which gear needs to be replaced.
+
+Consider the same engine schematic again:
+
+```
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+```
+
+In this schematic, there are two gears. The first is in the top left; it has part numbers 467 and 35, so its gear ratio is 16345. The second gear is in the lower right; its gear ratio is 451490. (The * adjacent to 617 is not a gear because it is only adjacent to one part number.) Adding up all of the gear ratios produces 467835.
+
+What is the sum of all of the gear ratios in your engine schematic?
+
+<!-- livebook:{"break_markdown":true} -->
+
 ### Code
 
 ```elixir
 defmodule PartTwo do
+  import PartOne
+
   def solve(input) do
     IO.puts("--- Part Two ---")
-    IO.puts("Result: #{run(input)}")
+    IO.puts("Result: #{run_parttwo(input)}")
   end
 
-  def run(input) do
+  def run_parttwo(input) do
+    {symbols, numbers} =
+      input
+      |> prepare_input()
+      |> find_symbols_and_numbers()
+
+    # [{{row_index, col_index}, "*"}]
+    grid_gear_keys =
+      symbols
+      |> Enum.filter(fn {{_, _}, symbol} -> symbol == "*" end)
+      |> Enum.map(fn {key, _} -> key end)
+
+    # Locate every gear
+    # Check if a number has a gear adjacent
+
+    Enum.reduce(numbers, [], fn {_key, number_list} = number, acc ->
+      number_gear_keys =
+        number
+        |> get_neighbour_keys()
+        |> Enum.filter(&(&1 in grid_gear_keys))
+
+      case number_gear_keys do
+        [] ->
+          acc
+
+        _ ->
+          number = number_list_to_integer(number_list)
+          [Enum.reduce(number_gear_keys, [], fn key, acc -> [{key, number} | acc] end) | acc]
+      end
+    end)
+    |> List.flatten()
+    |> Enum.reduce(%{}, fn {k, v}, acc ->
+      Map.update(acc, k, [v], &[v | &1])
+    end)
+    |> Map.reject(fn {_k, v} -> Enum.count(v) == 1 end)
+    |> Enum.map(fn {_k, v} -> Enum.reduce(v, 1, fn n, acc -> n * acc end) end)
+    |> Enum.sum()
+  end
+
+  def get_gear_keys(keys, gears) do
+    Enum.filter(keys, &Map.has_key?(gears, &1))
   end
 end
+
+PartTwo.run_parttwo(puzzle_input)
 ```
 
 ### Tests
@@ -314,11 +369,21 @@ defmodule PartTwoTest do
   import PartTwo
 
   @input """
+  467..114..
+  ...*......
+  ..35..633.
+  ......#...
+  617*......
+  .....+.58.
+  ..592.....
+  ......755.
+  ...$.*....
+  .664.598..
   """
-  @expected nil
+  @expected 467_835
 
   test "part two" do
-    actual = run(@input)
+    actual = run_parttwo(@input) |> IO.inspect()
     assert actual == @expected
   end
 end
@@ -334,4 +399,4 @@ ExUnit.run()
 PartTwo.solve(puzzle_input)
 ```
 
-<!-- livebook:{"offset":7478,"stamp":{"token":"XCP.1doaqi3IR5Djg3va7oXEo_MsjQHCP-YWRap7PZyuXmCc9Tk-qTpDG6Gg8tdUIQWyGEF-ug5nxlcUnu5uEagZq2mhEJLrQ0Z470vmVw0OWtbmMIS70vI","version":2}} -->
+<!-- livebook:{"offset":9936,"stamp":{"token":"XCP.XHJH0lkkA0rIapmNM7aVJSJocbS6cPaGK6q8iSNLUMXEeJKm8n_b9g-jJsiEus7PQBifx33d-qaul37X2FN9KWDdR9AceBF6wZ7Twoam4qzodzzvXj4","version":2}} -->
